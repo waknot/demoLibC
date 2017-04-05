@@ -5,7 +5,7 @@
 ** Login   <castel_a@etna-alternance.net>
 ** 
 ** Started on  Fri Feb  3 03:21:04 2017 CASTELLARNAU Aurelien
-** Last update Thu Feb 23 23:13:30 2017 CASTELLARNAU Aurelien
+** Last update Wed Apr  5 14:33:41 2017 CASTELLARNAU Aurelien
 */
 
 #include <stdlib.h>
@@ -47,15 +47,15 @@ int		remove_from_index(t_chain *chain, t_link *link)
   t_link	**tmp;
 
   tmp = NULL;
-  if ((tmp = malloc((chain->index + 1) * sizeof(*link))) == NULL)
+  if ((tmp = malloc((chain->index) *  sizeof(*link))) == NULL)
     return (1);
   index = 0;
-  while (index < chain->index)
+  while (index != link->index)
     {
       tmp[index] = chain->dictionnary[index];
       ++index;
     }
-  while ((index + 1) < chain->index)
+  while (index < (chain->index -1) && index + 1 <= chain->index)
     {
       tmp[index] = chain->dictionnary[index + 1];
       tmp[index]->index = index;
