@@ -5,7 +5,7 @@
 ** Login   <castel_a@etna-alternance.net>
 ** 
 ** Started on  Fri Feb  3 02:13:19 2017 CASTELLARNAU Aurelien
-** Last update Fri Apr  7 16:37:39 2017 CASTELLARNAU Aurelien
+** Last update Mon Apr 10 21:07:22 2017 CASTELLARNAU Aurelien
 */
 
 #include <stdlib.h>
@@ -57,13 +57,11 @@ int		add_link(t_chain **chain, void *content)
   if ((*chain)->first == NULL)
     {
 
-      my_putstr("\n Init chain");
       init_chain(chain, &link);
       init_index(chain);
     }
   else
     {
-      my_putstr("\nSet a new link");
       (*chain)->last->next = link;
       link->next = NULL;
       link->prev = (*chain)->last;
@@ -71,16 +69,12 @@ int		add_link(t_chain **chain, void *content)
     }
   if (add_to_index(chain, &link))
     return (1);
-  // Here or in indexor?
   (*chain)->index++;
-  my_putstr("\ninto add_link, check chain index: ");
-  my_put_nbr((*chain)->index);
   return (0);
 }
 
 int		remove_link(t_chain **chain, t_link *link)
 {
-  locate();
   if (link == (*chain)->first && link == (*chain)->last)
     {
       free((*chain)->dictionnary);
@@ -102,16 +96,12 @@ int		remove_link(t_chain **chain, t_link *link)
       link->next->prev = link->prev;
       link->prev->next = link->next;
     }
-  locate();
   if ((*chain) != NULL)
     {
-      locate();
       if (remove_from_index(chain, link))
 	return (1);
-      locate();
       (*chain)->index--;
     }
-  locate();
   free(link);
   return (0);
 }
@@ -134,8 +124,6 @@ int	delete_chainf(t_chain **chain)
   while ((*chain) != NULL)
     {
       ltmp = (*chain)->first;
-      my_putstr("\nINDEX OF first IN DELETE CHAINF ");
-      my_put_nbr(ltmp->index);
       if (remove_link(chain, (*chain)->first))
 	return (1);
     }

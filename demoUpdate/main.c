@@ -5,7 +5,7 @@
 ** Login   <castel_a@etna-alternance.net>
 ** 
 ** Started on  Wed Apr  5 11:44:31 2017 CASTELLARNAU Aurelien
-** Last update Mon Apr 10 21:33:06 2017 CASTELLARNAU Aurelien
+** Last update Mon Apr 10 23:43:53 2017 CASTELLARNAU Aurelien
 */
 
 #include <stdlib.h>
@@ -15,7 +15,25 @@ void    display_help()
 {
   my_putstr("\nUse:\n");
   my_putstr("\nMandatory: -hello: display 'Hello World'\n");
+  my_putstr("\nMandatory: -ipconfig [address] [port]\n");
   my_putstr("\nOptional: -help: display usage\n");
+}
+
+// For an example with a int as expected parameter.
+void		fake_ipconfig(t_chain *parameters)
+{
+  int		port;
+
+  my_putstr("\nThe address is set to: ");
+  my_putstr((char*)((t_link*)parameters->dictionnary[0])->content);
+  my_putstr("\nThe port is set to: ");
+
+  // On cast le deuxième paramètre en int grâce à getnbr
+  port = my_getnbr((char*)((t_link*)parameters->dictionnary[1])->content);
+  // et on a un int...
+  my_put_nbr(port);
+  // de là on peut paramétrer
+  my_putchar('\n');
 }
 
 void		display_hello(t_chain *parameters)
@@ -23,9 +41,12 @@ void		display_hello(t_chain *parameters)
   t_link	*tmp;
 
   tmp = parameters->first;
+  my_putstr("\n");
   while (tmp)
     {
       my_putstr((char*)tmp->content);
+      my_putchar(' ');
+      tmp = tmp->next;
     }
   /*
   ** Ou bien:
@@ -38,6 +59,21 @@ void		display_hello(t_chain *parameters)
   ** convertible par my_put_nbr, c'est le drame...
   */
   my_putstr("\n Hello World\n");
+}
+
+int     exec(t_option *option)
+{
+  char  *opt;
+
+  opt = option->name;
+  my_putstr("\nExecution de la fonction de callback: ");
+  my_putstr(opt);
+
+  if (!my_strcmp(opt, "-h"))
+    ((void (*)(void))option->action)();
+  if (!my_strcmp(opt, "-hello") || !my_strcmp(opt, "-ipconfig"))
+    (*(void (*)(t_chain*))option->action)(option->parameters);
+  return (0);
 }
 
 /*
@@ -55,6 +91,7 @@ int		main(int argc, char *argv[])
   // Chainer ces options dans une t_chain
   t_chain	*chaine_options;
   t_option	*opt_hello;
+  t_option	*opt_conf;
   t_option	*opt_help;
   t_link	*ltmp;
   t_option	*otmp;
@@ -72,29 +109,40 @@ int		main(int argc, char *argv[])
   //                           )
   if ((opt_hello = new_option(1, 0, 4, "-hello", display_hello)) == NULL)
     return (1);
+ if ((opt_conf = new_option(1, 2, 0, "-ipconfig", fake_ipconfig)) == NULL)
+    return (1);
   if ((opt_help = new_option(0, 0, 0, "-help", display_help)) == NULL)
     return (1);
+  // On active les chaines de parametres pour les options qui doivent en avoir
   if ((opt_hello->parameters = create_chain()) == NULL)
     return (1);
+  if ((opt_conf->parameters = create_chain()) == NULL)
+    return (1);
+  // on link les options
   if (add_link(&chaine_options, opt_hello))
+    return (1);
+  if (add_link(&chaine_options, opt_conf))
     return (1);
   if (add_link(&chaine_options, opt_help))
     return (1);
 
-  ltmp = chaine_options->first;
-  while (ltmp)
-    {
-      otmp = (t_option*)ltmp->content;
-      my_putstr("\nCheck link index: ");
-      my_put_nbr(ltmp->index);
-      my_putstr("\ncheck in option content: ");
-      my_putstr((char*)otmp->name);
-      ltmp = ltmp->next;
-    }
   // Une fois les options définies (typiquement, dans une fonction get_options)
   // on passe argv et argc à une fonction parse() et c'est finis...
 
-  parse(argc, argv, &chaine_options);
+  if (parse(argc, argv, &chaine_options))
+    display_help();
+  else
+    {
+      ltmp = chaine_options->first;
+      while (ltmp)
+	{
+	  otmp = ((t_option*)ltmp->content);
+	  // Exec() est à définir par l'utilisateur
+	  if (otmp->to_execute)
+	    exec(otmp);
+	  ltmp = ltmp->next;
+	}
+    }
 
   // pas zapper...
   delete_chainf(&chaine_options);

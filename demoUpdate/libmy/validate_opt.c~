@@ -5,7 +5,7 @@
 ** Login   <castel_a@etna-alternance.net>
 ** 
 ** Started on  Thu Feb  2 23:56:36 2017 CASTELLARNAU Aurelien
-** Last update Wed Apr  5 16:44:44 2017 CASTELLARNAU Aurelien
+** Last update Mon Apr 10 23:20:29 2017 CASTELLARNAU Aurelien
 */
 
 #include <stdlib.h>
@@ -20,12 +20,21 @@ int		format_parameters(int pos,
 				  t_option **option)
 {
   int		boundary;
-  int		index_parameter;
   t_chain	params_chain;
+  char		*arg_tmp;
 
   boundary = pos + parameters;
-  index_parameter = 0;
-  (*option)->mandatory_arguments = index_parameter;
+  while (pos < boundary)
+    {
+      my_putstr("\nadd parameter: ");
+      my_putstr(argv[pos]);
+      my_putstr("\ninto ");
+      my_putstr((*option)->name);
+      arg_tmp = my_strdup(argv[pos]);
+      if (add_link(&((*option)->parameters), arg_tmp))
+	return (1);
+    }
+  (*option)->mandatory_arguments = parameters;
   return (0);
 }
 
@@ -37,40 +46,34 @@ int		check_arguments(int index_argv, int argc, t_option *option, char *argv[])
 
   pos = index_argv;
   parameters = 0;
-  my_putstr("\nInto check_arguments()\n");
-  if (!option->mandatory_arguments)
-    return (0);
+  if ((index_argv + option->mandatory_arguments) >= argc)
+    return (dis_miss_arg_err(option->name));
   else
     {
-      if ((index_argv + option->mandatory_arguments) >= argc)
-	return (dis_miss_arg_err(option->name));
-      else
+      while (index_argv < (pos + option->mandatory_arguments))
 	{
-	  while (index_argv < (pos + option->mandatory_arguments))
-	    {
-	      ++index_argv;
-	      if (argv[index_argv][0] == 45 && argv[index_argv][1] != 45)
-		return (dis_arg_err(argv[pos], argv[index_argv]));
-	      ++parameters;
-	    }
-	  offset = 0;
-	  while (index_argv < (pos + option->allowed_arguments)
-		 && index_argv + 1 < argc
-		 && offset != argc)
-	    {
-	      offset = index_argv;
-	      ++index_argv;
-	      if (argv[index_argv][0] == 45)
-		  offset = argc;
-	      else
-		  ++parameters;
-	    }
-	  if (index_argv + 1 < argc && argv[index_argv + 1][0] != 45)
-	    return (dis_too_much_argv(argv[pos], argv[index_argv + 1]));
-	  if (format_parameters(pos, parameters, argv, &option))
-	    return (dis_memory_fail("Try to add parameter in option->parameter\n function check_argument from libParse"));
-	  return (0);
+	  ++index_argv;
+	  if (argv[index_argv][0] == 45 && argv[index_argv][1] != 45)
+	    return (dis_arg_err(argv[pos], argv[index_argv]));
+	  ++parameters;
 	}
+      offset = 0;
+      while (index_argv < (pos + option->allowed_arguments)
+	     && index_argv + 1 < argc
+	     && offset != argc)
+	{
+	  offset = index_argv;
+	  ++index_argv;
+	  if (argv[index_argv][0] == 45)
+	    offset = argc;
+	  else
+	    ++parameters;
+	}
+      if (index_argv + 1 < argc && argv[index_argv][0] != 45 && argv[index_argv + 1][0] != 45 )
+	return (dis_too_much_argv(argv[pos], argv[index_argv + 1]));
+      if (format_parameters(pos, parameters, argv, &option))
+	return (dis_memory_fail("Try to add parameter in option->parameter\n function check_argument from libParse"));
+      return (0);
     }
 }
 
@@ -90,20 +93,14 @@ int		check_mandatories(int argc, char *argv[], t_chain **options)
       option = ((t_option*)tmp->content);
       if (option->mandatory == 1)
 	{
-	  my_putstr("\nCheck if stay mandatory for option: ");
-	  my_putstr(option->name);
 	  return (dis_mandatory_err(option->name));
 	}
       if (((t_chain*)option->parameters) != NULL)
 	{
-	  my_putstr("\nGo inside if in check mandatories for option: ");
-	  my_putstr(option->name);
 	  param_tmp = ((t_link*)((t_chain*)option->parameters)->first);
 	  while (param_tmp)
 	    {
-	      my_putstr("\nInto the while with: ");
 	      parameter = ((char*)param_tmp->content);
-	      my_putstr(parameter);
 	      param_tmp = param_tmp->next;
 	    }
 	}

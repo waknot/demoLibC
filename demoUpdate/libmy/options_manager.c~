@@ -5,7 +5,7 @@
 ** Login   <castel_a@etna-alternance.net>
 ** 
 ** Started on  Wed Feb  1 16:32:30 2017 CASTELLARNAU Aurelien
-** Last update Fri Apr  7 15:48:38 2017 CASTELLARNAU Aurelien
+** Last update Mon Apr 10 23:26:21 2017 CASTELLARNAU Aurelien
 */
 
 #include <stdlib.h>
@@ -30,7 +30,7 @@ t_option	*new_option(int mandatory,
   option->to_execute = 0;
   option->name = my_strdup(name);
   option->action = action;
-  option->parameters = NULL;
+  option->parameters = create_chain();
   return (option);
 }
 
@@ -51,12 +51,7 @@ void		free_options_in_chain(t_chain **chain)
   index_parameter = 0;
   while (tmp)
     {
-      my_putstr("\nLINK of index: ");
-      my_put_nbr(tmp->index);
       option = ((t_option*)tmp->content);
-      my_putstr("\nOption in free process: ");
-      my_putstr((char*)option->name);
-      my_putstr("\noption name accessed");
       if (tmp->content != NULL)
 	{
 	  if (option->name != NULL)
@@ -77,5 +72,4 @@ void		free_options_in_chain(t_chain **chain)
 	}
       tmp = tmp->next;
     }
-  my_putstr("\n\nFIN FREE OPTION IN CHAIN\n\n");
 }

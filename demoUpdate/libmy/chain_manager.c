@@ -5,7 +5,7 @@
 ** Login   <castel_a@etna-alternance.net>
 ** 
 ** Started on  Fri Feb  3 02:13:19 2017 CASTELLARNAU Aurelien
-** Last update Mon Apr 10 21:07:22 2017 CASTELLARNAU Aurelien
+** Last update Mon Apr 10 23:25:56 2017 CASTELLARNAU Aurelien
 */
 
 #include <stdlib.h>
@@ -54,9 +54,9 @@ int		add_link(t_chain **chain, void *content)
   if ((link = malloc(sizeof(*link))) == NULL)
     return (1);
   link->content = content;
+  
   if ((*chain)->first == NULL)
     {
-
       init_chain(chain, &link);
       init_index(chain);
     }
@@ -66,9 +66,8 @@ int		add_link(t_chain **chain, void *content)
       link->next = NULL;
       link->prev = (*chain)->last;
       (*chain)->last = link;
+      add_to_index(chain, &link);
     }
-  if (add_to_index(chain, &link))
-    return (1);
   (*chain)->index++;
   return (0);
 }
