@@ -7,6 +7,7 @@
 
 static void init(void)
 {
+//socket windows
 #ifdef WIN32
   WSADATA wsa;
   int err = WSAStartup(MAKEWORD(2, 2), &wsa);
@@ -27,59 +28,74 @@ static void end(void)
 
 static void app(void)
 {
-  SOCKET sock = init_connection();
-  char buffer[BUF_SIZE];
-  /* the index for the array */
-  int actual = 0;
+  SOCKET sock = init_connection(); /*Socket de type int
+  char buffer[BUF_SIZE];       /*BUF_SIZE = 1024 (defini dans le .h)*/
+  int actual = 0;              /* the index for the array */
   int max = sock;
-  /* an array for all clients */
-  Client clients[MAX_CLIENTS];
-
-  fd_set rdfs;
+  
+ 
+  
+  Client clients[MAX_CLIENTS];    /* an array for all clients 
+									MAX_CLIENTS = 100 (défini dans le .h)
+								  donc un tableau de structure
+								  client(socket sock, char name[buf_size]))*/
+  
+  fd_set rdfs;  			/*initialisation d'une variable file descriptor	(type fd_set)*/
 
   while(1)
     {
       int i = 0;
-      FD_ZERO(&rdfs);
+	  
+      FD_ZERO(&rdfs);			 /* void FD_ZERO(fd_set *set);
+									initialise le file descriptor
+									pour qu'il soit à zéro bits */
 
-      /* add STDIN_FILENO */
-      FD_SET(STDIN_FILENO, &rdfs);
+      
+      FD_SET(STDIN_FILENO, &rdfs);  /* void FD_SET(int fd, fd_set *set); 
+										add STDIN_FILENO ??? */
 
-      /* add the connection socket */
-      FD_SET(sock, &rdfs);
+      
+      FD_SET(sock, &rdfs);   /* add the connection socket au file descriptor */
 
-      /* add socket of each client */
-      for(i = 0; i < actual; i++)
+      for(i = 0; i < actual; i++)   /* add socket of each client */
 	{
-	  FD_SET(clients[i].sock, &rdfs);
+	  FD_SET(clients[i].sock, &rdfs); /* param de gauche dans param de droite */
 	}
 
-      if(select(max + 1, &rdfs, NULL, NULL, NULL) == -1)
+      if(select(max + 1, &rdfs, NULL, NULL, NULL) == -1)   /*int select(int rdfs, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout); 
+															select permet a un programme de surveiller plusieurs file descriptor*/
 	{
-	  perror("select()");
+	  perror("select()"); 			/*retourne la derniere erreur connue + string 'select()')*/
 	  exit(errno);
 	}
 
-      /* something from standard input : i.e keyboard */
-      if(FD_ISSET(STDIN_FILENO, &rdfs))
+     
+      if(FD_ISSET(STDIN_FILENO, &rdfs))   /* something from standard input : i.e keyboard */
 	{
-	  /* stop process when type on keyboard */
-	  break;
+	  
+	  break;                              /* stop process when type on keyboard */
 	}
       else if(FD_ISSET(sock, &rdfs))
 	{
-	  /* new client */
-	  SOCKADDR_IN csin = { 0 };
-	  size_t sinsize = sizeof csin;
-	  int csock = accept(sock, (SOCKADDR *)&csin,(socklen_t *)&sinsize);
-	  if(csock == SOCKET_ERROR)
+	 
+	  SOCKADDR_IN csin = { 0 };          /* new client */
+												
+	  size_t sinsize = sizeof csin; /* size_t est pour définir un int unsigned */
+	  
+	  
+	  int csock = accept(sock, (SOCKADDR *)&csin,(socklen_t *)&sinsize); /*int accept(int sock, struct sockaddr *adresse, socklen_t *longueur);
+																		extrait la première connection de la file d'attente des connexions en 
+																		attente de socket et renvoi un file descripteur pour le socket si 
+																		il est accepté*/
+	  
+	  if(csock == SOCKET_ERROR) /* socket_error défini dans .h = -1 */
 	    {
 	      perror("accept()");
 	      continue;
 	    }
 
-	  /* after connecting the client sends its name */
-	  if(read_client(csock, buffer) == -1)
+	  if(read_client(csock, buffer) == -1)	  /* after connecting the client sends its name */
+
 	    {
 	      /* disconnected */
 
@@ -92,7 +108,7 @@ static void app(void)
 	  FD_SET(csock, &rdfs);
 
 	  Client c = { csock };
-	  strncpy(c.name, buffer, BUF_SIZE - 1);
+	  strncpy(c.name, buffer, BUF_SIZE - 1); /* fait sauter /0  */
 	  clients[actual] = c;
 	  strncat(buffer, " connected !", BUF_SIZE - strlen(buffer) - 1);
 	  send_message_to_all_clients(clients, c, actual, buffer, 1);
@@ -173,26 +189,44 @@ static void send_message_to_all_clients(Client *clients, Client sender, int actu
 
 static int init_connection(void)
 {
-  SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
-  SOCKADDR_IN sin = { 0 };
+  SOCKET sock = socket(AF_INET, SOCK_STREAM, 0); /* socket - Créer un point de communication proto:
+													int socket(int domain, int type, int protocol);  
+													-AF_INET defini le protocole IPV4
+													-SOCK_STREAM : Support de dialogue garantissant l'intégrité, 
+													 fournissant un flux de données binaires, et intégrant un mécanisme
+													 pour les transmissions de données hors-bande.*/
 
-  if(sock == INVALID_SOCKET)
+  SOCKADDR_IN sin = { 0 }; 					 /* structure de sockaddr_in initialisée a 0
+												{
+												short    sin_family; 
+												u_short    sin_port; 
+												struct  in_addr  sin_addr; 
+												char    sin_zero[8];
+												};*/
+
+  if(sock == INVALID_SOCKET)  /* invalid_socket def dans .h = -1 */
     {
-      perror("socket()");
+      perror("socket()");  /*perror permet de sortir la dernière erreur rencontrée avec le texte ajouté ("") */
       exit(errno);
     }
 
-  sin.sin_addr.s_addr = htonl(INADDR_ANY);
+  sin.sin_addr.s_addr = htonl(INADDR_ANY);  /* -hton Convert multi-byte integer types from host byte order to network byte order 
+											   -INADDR_ANY. This allowed your program to work without 
+												knowing the IP address of the machine it was running */
   sin.sin_port = htons(PORT);
-  sin.sin_family = AF_INET;
+  sin.sin_family = AF_INET; /*protocol IPV4 */
 
-  if(bind(sock,(SOCKADDR *) &sin, sizeof sin) == SOCKET_ERROR)
-    {
+  if(bind(sock,(SOCKADDR *) &sin, sizeof sin) == SOCKET_ERROR) /* if quit violently, the program wont want to bind again and will need to be closed, recompiled and restart 
+    {															-bind lie un socket avec une structure sockaddr.
+																 proto : int bind(int sockfd, const struct sockaddr *addr,  socklen_t addrlen);*/
       perror("bind()");
       exit(errno);
     }
 
-  if(listen(sock, MAX_CLIENTS) == SOCKET_ERROR)
+  if(listen(sock, MAX_CLIENTS) == SOCKET_ERROR) /* proto int listen(int s, int backlog);
+												listen() marque la socket référencée par sockfd comme une socket passive,
+												c'est-à-dire comme une socket qui sera utilisée pour accepter 
+												les demandes de connexions entrantes en utilisant accept()*/
     {
       perror("listen()");
       exit(errno);
